@@ -123,12 +123,22 @@ def print_output():
 gclist = []
 lengthlist = []
 
-if args.length == True:
-    length()
 
-if args.gccontent == True:
-    gccontent()
 
-print_output()
+
+
+if __name__ == "__main__":
+                                 
+    if args.length == True:
+        length()
+
+    if args.gccontent == True:
+        gccontent()
+
+    print_output()
+
+
+
+
 
 args.infile.close()
