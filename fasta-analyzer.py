@@ -113,7 +113,8 @@ def print_output():
             print fs.length(), '\t',
         if args.gccontent == True:
             print round(fs.gccount() * 100, 4), '%',
-        print	# Just there to introduce a line break.
+        if len(sys.argv) > 2:    # If no flags are given, no line breaks are printed.
+            print	# Just there to introduce a line break.
 
 
 
