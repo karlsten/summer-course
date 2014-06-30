@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import argparse
 import sys
 
 
 
-# This code is partly based on https://github.com/mtop/ngs/blob/master/fp.py 
+# This code is partly based on https://github.com/mtop/ngs/blob/master/fp.py by Mats Töpel
 
 
 
@@ -38,7 +39,7 @@ args = parser.parse_args()
 
 
 
-
+# Each sequence becomes one object of the class Fasta.
 class Fasta(object):
 
     def __init__(self, name, seq):
@@ -54,7 +55,8 @@ class Fasta(object):
     def length(self):
         return len(self.seq)
 
-    # Calculates the number of G and C relative to the total number of G, C, A and T.
+    # Calculates the number of G and C relative to the 
+    # total number of G, C, A and T.
     def gccount(self):
         self.gc = self.seq.count("G") + self.seq.count("C")
         self.total = self.seq.count("G") + self.seq.count("C") + \
@@ -83,38 +85,23 @@ def read_file(infile):
 
 
 
-# Adds the length of each sequence to lengthlist.
-def length():
-    for name, seq in read_file(args.infile):
-        fs = Fasta(name, seq)
-        lengthlist.append(fs.length())
-
-
-
-
-
-# Adds the GC content of each sequence (in percent) to gclist.
-def gccontent():
-    for name, seq in read_file(args.infile):
-        fs = Fasta(name, seq)
-        gclist.append(fs.gccount() * 100)
-
-
-
-
-
-# Print the outputs that were chosen.
-def print_output():
+# Print the outputs that were chosen and saves the gc content 
+# and length in lists.
+def output():
     for name, seq in read_file(args.infile):
         fs = Fasta(name, seq)
         if args.header == True:
             print fs.header(), '\t',
         if args.length == True:
+            lengthlist.append(fs.length())
             print fs.length(), '\t',
         if args.gccontent == True:
+            gclist.append(fs.gccount() * 100)
             print round(fs.gccount() * 100, 4), '%',
-        if len(sys.argv) > 2:    # If no flags are given, no line breaks are printed.
+        if len(sys.argv) > 2:    # If no flags are given, 
+                                 # no line breaks are printed.
             print	# Just there to introduce a line break.
+    args.infile.close()
 
 
 
@@ -128,17 +115,5 @@ lengthlist = []
 
 
 if __name__ == "__main__":
-                                 
-    if args.length == True:
-        length()
+    output()
 
-    if args.gccontent == True:
-        gccontent()
-
-    print_output()
-
-
-
-
-
-args.infile.close()
