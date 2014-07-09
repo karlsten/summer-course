@@ -95,7 +95,11 @@ def read_covfile(infile):
     for line in args.coverage:
         name = line.split('\t')[0]
         if name in dictionary.keys():
-            dictionary[name].cov = int(line.split('\t')[1].rstrip())
+            if line.split('\t')[1].rstrip() is not '': # Avoid error caused by
+                                                       # '' not being an int
+                                                       # if coverage, but not 
+                                                       # \t, is missing in file
+                dictionary[name].cov = int(line.split('\t')[1].rstrip())
 
 
 
