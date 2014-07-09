@@ -7,7 +7,8 @@ from matplotlib import pyplot as plt
 
 
 
-# This code is partly based on https://github.com/mtop/ngs/blob/master/fp.py by Mats Töpel
+# This code is partly based on https://github.com/mtop/ngs/blob/master/fp.py
+# by Mats Töpel
 
 
 
@@ -23,6 +24,11 @@ parser.add_argument("infile",
                     help = "Infile in fasta format.", 
                     default = sys.stdin)
 
+parser.add_argument("coverage",
+                    type = argparse.FileType('r'),
+                    help = "Coverage file (name and coverage separated by tab)",
+                    nargs = '?')
+
 parser.add_argument("-hd", "--header", 
                     help = "Print sequence headers.", 
                     action = "store_true")
@@ -35,8 +41,12 @@ parser.add_argument("-gc", "--gccontent",
                     help = "Calculate the GC content of each sequence.", 
                     action = "store_true")
 
-parser.add_argument("-p", "--plot", 
+parser.add_argument("-p", "--lenplot", 
                     help = "Plot GC content against length.", 
+                    action = "store_true")
+
+parser.add_argument("-c", "--covplot",
+                    help = "Plot GC content against coverage.",
                     action = "store_true")
 
 args = parser.parse_args()
@@ -51,6 +61,8 @@ class Fasta(object):
     def __init__(self, name, seq):
         self.name = name
         self.seq = seq
+        self.cov = float('nan')	# For missing coverage values, 
+                                # covplot will not plot.
 
     def header(self):
         return self.name[1:].rstrip()
@@ -70,6 +82,21 @@ class Fasta(object):
         self.content = (float(self.gc) / self.total) * 100
         return self.content
 
+    def coverage(self):
+        return self.cov
+
+
+
+
+
+# Read coverage file and add coverage for each contig to the dictionary.
+def read_covfile(infile):
+    args.coverage.seek(0)
+    for line in args.coverage:
+        name = line.split('\t')[0]
+        if name in dictionary.keys():
+            dictionary[name].cov = int(line.split('\t')[1].rstrip())
+
 
 
 
@@ -81,37 +108,73 @@ def read_file(infile):
     for line in args.infile:
         if line.startswith('>'):
             if name:
-                yield (name, ''.join(seq))
+                fs = Fasta(name, ''.join(seq))
+                dict2 = {fs.header() : fs}
+                dictionary.update(dict2)
             name, seq = line, []
         else:
             seq.append(line)
-    if name: yield (name, ''.join(seq))
-
-
-
-
-
-# Print the outputs and plot GC content against length if the
-# flags are given.
-def print_output():
-    for name, seq in read_file(args.infile):
-        fs = Fasta(name, seq)
+    if name:
+        fs = Fasta(name, ''.join(seq))
         dict2 = {fs.header() : fs}
         dictionary.update(dict2)
+
+
+
+
+
+# Plot GC content against length. 
+def lenplot():
+    for key in dictionary:
+        plt.scatter(dictionary[key].length(), 
+        dictionary[key].gccount())
+    plt.suptitle('GC - Length', fontsize = 20)
+    plt.ylabel('GC content (%)')
+    plt.xlabel('Length (nt)')
+    plt.show()
+
+
+
+
+
+# Plot GC content against coverage.
+def covplot():
+    for key in dictionary:
+        plt.scatter(dictionary[key].gccount(), 
+        dictionary[key].coverage())
+    plt.suptitle('GC - Coverage', fontsize = 20)
+    plt.ylabel('Coverage')
+    plt.xlabel('GC content (%)')
+    plt.show()
+
+
+
+
+
+# Print the outputs that were chosen.
+def main():
+    read_file(args.infile)
+    if args.coverage:
+        read_covfile(args.coverage)
+    for key in dictionary:
         if args.header == True:
-            print fs.header(), '\t',
+            print dictionary[key].header(), '\t',
         if args.length == True:
-            print dictionary[fs.header()].length(), '\t',
+            print dictionary[key].length(), '\t',
         if args.gccontent == True:
-            print dictionary[fs.header()].gccount(),
+            print dictionary[key].gccount(), '\t',
+        if args.coverage:
+            print dictionary[key].coverage(),
         if len(sys.argv) > 2:    # If no flags are given, 
                                  # no line breaks are printed.
             print	# Just there to introduce a line break.
-        if args.plot == True:
-            plt.scatter(dictionary[fs.header()].length(), dictionary[fs.header()].gccount())
-            plt.ylabel('GC content (%)')
-            plt.xlabel('Length (nt)')
-    plt.show()
+    if args.lenplot == True:
+        lenplot()
+    if args.covplot == True:
+        try:
+            covplot()
+        except:
+            print "ERROR: Correct coverage file not supplied."
     args.infile.close()
 
 
@@ -125,4 +188,5 @@ dictionary = {}
 
 
 if __name__ == "__main__":
-    print_output()
+    main()
+
