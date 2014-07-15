@@ -1,5 +1,5 @@
 from nose.tools import *
-from fasta_analyzer import fasta_analyzer
+import fasta_analyzer
 import os
 
 
