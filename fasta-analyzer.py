@@ -91,7 +91,7 @@ class Fasta(object):
 
 # Read coverage file and add coverage for each contig to the dictionary.
 def read_covfile(infile):
-    args.coverage.seek(0)
+    infile.seek(0)
     for line in infile:
         name = line.split('\t')[0]
         if name in dictionary.keys():
@@ -108,7 +108,7 @@ def read_covfile(infile):
 
 # Read fasta file.
 def read_file(infile):
-    args.infile.seek(0)
+    infile.seek(0)
     name, seq = None, []
     for line in infile:
         if line.startswith('>'):
