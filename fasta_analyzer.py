@@ -41,6 +41,10 @@ parser.add_argument("-gc", "--gccontent",
                     help = "Calculate the GC content of each sequence.", 
                     action = "store_true")
 
+parser.add_argument("-n", "--ncontent",
+                    help = "Calculate the number of N in each sequence.",
+                    action = "store_true")
+
 parser.add_argument("-p", "--lenplot", 
                     help = "Plot GC content against length.", 
                     action = "store_true")
@@ -59,13 +63,13 @@ args = parser.parse_args()
 class Fasta(object):
 
     def __init__(self, name, seq):
-        self.name = name
-        self.seq = seq
+        self.name = name[1:].rstrip()
+        self.seq = seq.lower()
         self.cov = float('nan')	# For missing coverage values, 
                                 # covplot will not plot.
 
     def header(self):
-        return self.name[1:].rstrip()
+        return self.name
 
     def sequence(self):
         return self.seq
@@ -76,15 +80,17 @@ class Fasta(object):
     # Calculates the number of G and C relative to the 
     # total number of G, C, A and T.
     def gccount(self):
-        self.gc = self.seq.count("G") + self.seq.count("C")
-        self.total = self.seq.count("G") + self.seq.count("C") + \
-                     self.seq.count("A") + self.seq.count("T")
-        self.content = (float(self.gc) / self.total) * 100
+        self.gc = self.seq.count("g") + self.seq.count("c")
+        self.total = self.seq.count("g") + self.seq.count("c") + \
+                     self.seq.count("a") + self.seq.count("t")
+        self.content = round((float(self.gc) / self.total) * 100, 3)
         return self.content
 
     def coverage(self):
         return self.cov
 
+    def ncontent(self):
+        return self.seq.count("n")
 
 
 
@@ -96,10 +102,10 @@ def read_covfile(infile):
         name = line.split('\t')[0]
         if name in dictionary.keys():
             if line.split('\t')[1].rstrip() is not '': # Avoid error caused by
-                                                       # '' not being an int
+                                                       # '' not being a float
                                                        # if coverage, but not 
                                                        # \t, is missing in file
-                dictionary[name].cov = int(line.split('\t')[1].rstrip())
+                dictionary[name].cov = float(line.split('\t')[1].rstrip())
     return dictionary
 
 
@@ -169,6 +175,8 @@ def main():
             print dictionary[key].length(), '\t',
         if args.gccontent == True:
             print dictionary[key].gccount(), '\t',
+        if args.ncontent == True:
+            print dictionary[key].ncontent(), '\t',
         if args.coverage:
             print dictionary[key].coverage(),
         if len(sys.argv) > 2:    # If no flags are given, 

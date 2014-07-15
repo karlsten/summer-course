@@ -20,15 +20,15 @@ def setup():
     fasta_file.write('>contig1\n')
     fasta_file.write('GATTACAGATTACAGATTACAGATTACA\n'\
                      'GATTACAGATTACAGATTACAGATTACA\n'\
-                     'GATTACAGATTACAGATTACAGATTACA\n')
+                     'GATTACAGATTACAGATTACAGATTACAN\n')
     fasta_file.write('>contig2\n')
     fasta_file.write('GGATTACAGGATTACAGGATTACAGGATTACA\n'\
                      'GGATTACAGGATTACAGGATTACAGGATTACA\n'\
-                     'GGATTACAGGATTACAGGATTACAGGATTACA\n')
+                     'GGATTACAGGATTACAGGATTACAGGATTACANN\n')
     fasta_file.write('>contig3\n')
     fasta_file.write('GGATTACCAGGATTACCAGGATTACCAGGATTACCA\n'\
                      'GGATTACCAGGATTACCAGGATTACCAGGATTACCA\n'\
-                     'GGATTACCAGGATTACCAGGATTACCAGGATTACCA\n')
+                     'GGATTACCAGGATTACCAGGATTACCAGGATTACCANNN\n')
     coverage_file.write('contig1\t1000\n')
     coverage_file.write('contig2\t1001\n')
     coverage_file.write('contig3\t1002\n')
@@ -40,17 +40,18 @@ def setup():
 # Test the Fasta class.
 def test_class():
     name = ">Sequence_name\n"
-    seq = 'GATTACAGATTACAGATTACAGATTACAGATTACAGATTACA'\
-          'GATTACAGATTACAGATTACAGATTACAGATTACA'
+    seq = 'gattacagattacagattacagattacagattacagattaca'\
+          'gattacagattacagattacagattacagattacannn'
     fasta = fasta_analyzer.Fasta(name, seq)
-    assert_equal(fasta.name, name)
+    assert_equal(fasta.name, name[1:].rstrip())
     assert_equal(fasta.seq, seq)
     assert_equal(fasta.header(), "Sequence_name")
     assert_equal(fasta.sequence(), fasta.seq)
-    assert_equal(fasta.length(), 77)
-    assert_equal(fasta.gccount(), float(2)/7 * 100)
+    assert_equal(fasta.length(), 80)
+    assert_equal(fasta.gccount(), round(float(2)/7 * 100, 3))
     fasta.cov = "1234"
     assert_equal(fasta.coverage(), "1234")
+    assert_equal(fasta.ncontent(), 3)
 
 
 
@@ -61,26 +62,26 @@ def test_read_file():
     fasta_file.seek(0)
     read_file = fasta_analyzer.read_file(fasta_file)
     assert_equal(read_file['contig1'].header(), 'contig1')
-    assert_equal(read_file['contig1'].sequence(), 'GATTACAGATTACA'\
-                                                  'GATTACAGATTACA\n'\
-                                                  'GATTACAGATTACA'\
-                                                  'GATTACAGATTACA\n'\
-                                                  'GATTACAGATTACA'\
-                                                  'GATTACAGATTACA\n')
+    assert_equal(read_file['contig1'].sequence(), 'gattacagattaca'\
+                                                  'gattacagattaca\n'\
+                                                  'gattacagattaca'\
+                                                  'gattacagattaca\n'\
+                                                  'gattacagattaca'\
+                                                  'gattacagattacan\n')
     assert_equal(read_file['contig2'].header(), 'contig2')
-    assert_equal(read_file['contig2'].sequence(), 'GGATTACAGGATTACA'\
-                                                  'GGATTACAGGATTACA\n'\
-                                                  'GGATTACAGGATTACA'\
-                                                  'GGATTACAGGATTACA\n'\
-                                                  'GGATTACAGGATTACA'\
-                                                  'GGATTACAGGATTACA\n')
+    assert_equal(read_file['contig2'].sequence(), 'ggattacaggattaca'\
+                                                  'ggattacaggattaca\n'\
+                                                  'ggattacaggattaca'\
+                                                  'ggattacaggattaca\n'\
+                                                  'ggattacaggattaca'\
+                                                  'ggattacaggattacann\n')
     assert_equal(read_file['contig3'].header(), 'contig3')
-    assert_equal(read_file['contig3'].sequence(), 'GGATTACCAGGATTACCA'\
-                                                  'GGATTACCAGGATTACCA\n'\
-                                                  'GGATTACCAGGATTACCA'\
-                                                  'GGATTACCAGGATTACCA\n'\
-                                                  'GGATTACCAGGATTACCA'\
-                                                  'GGATTACCAGGATTACCA\n')
+    assert_equal(read_file['contig3'].sequence(), 'ggattaccaggattacca'\
+                                                  'ggattaccaggattacca\n'\
+                                                  'ggattaccaggattacca'\
+                                                  'ggattaccaggattacca\n'\
+                                                  'ggattaccaggattacca'\
+                                                  'ggattaccaggattaccannn\n')
 
 
 
