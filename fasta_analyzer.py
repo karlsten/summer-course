@@ -83,7 +83,10 @@ class Fasta(object):
         self.gc = self.seq.count("g") + self.seq.count("c")
         self.total = self.seq.count("g") + self.seq.count("c") + \
                      self.seq.count("a") + self.seq.count("t")
-        self.content = round((float(self.gc) / self.total) * 100, 3)
+        if self.total == 0:
+            self.content = float('nan')
+        else:
+            self.content = round((float(self.gc) / self.total) * 100, 3)
         return self.content
 
     def coverage(self):
@@ -101,11 +104,10 @@ def read_covfile(infile):
     for line in infile:
         name = line.split('\t')[0]
         if name in dictionary.keys():
-            if line.split('\t')[1].rstrip() is not '': # Avoid error caused by
-                                                       # '' not being a float
-                                                       # if coverage, but not 
-                                                       # \t, is missing in file
+            try:
                 dictionary[name].cov = float(line.split('\t')[1].rstrip())
+            except:
+                dictionary[name].cov = float('nan')
     return dictionary
 
 
@@ -137,9 +139,12 @@ def read_file(infile):
 
 # Plot GC content against length. 
 def lenplot():
+    xlist = []
+    ylist = []
     for key in dictionary:
-        plt.scatter(dictionary[key].length(), 
-        dictionary[key].gccount())
+        xlist.append(dictionary[key].length())
+        ylist.append(dictionary[key].gccount())
+    plt.scatter(xlist, ylist)
     plt.suptitle('GC - Length', fontsize = 20)
     plt.ylabel('GC content (%)')
     plt.xlabel('Length (nt)')
@@ -151,9 +156,12 @@ def lenplot():
 
 # Plot GC content against coverage.
 def covplot():
+    xlist = []
+    ylist = []
     for key in dictionary:
-        plt.scatter(dictionary[key].gccount(), 
-        dictionary[key].coverage())
+        xlist.append(dictionary[key].gccount())
+        ylist.append(dictionary[key].coverage())
+    plt.scatter(xlist, ylist)
     plt.suptitle('GC - Coverage', fontsize = 20)
     plt.ylabel('Coverage')
     plt.xlabel('GC content (%)')
