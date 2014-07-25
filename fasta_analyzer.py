@@ -4,6 +4,7 @@
 import argparse
 import sys
 from matplotlib import pyplot as plt
+import numpy as np
 
 
 
@@ -137,17 +138,47 @@ def read_file(infile):
 
 
 
-# Plot GC content against length. 
+# Plot GC content against length. Not done yet. 
 def lenplot():
     xlist = []
     ylist = []
+    namelist = []
     for key in dictionary:
         xlist.append(dictionary[key].length())
         ylist.append(dictionary[key].gccount())
-    plt.scatter(xlist, ylist)
+        namelist.append(dictionary[key].header())
+
+    def onpick(event):
+        ind = event.ind
+        contigname = namelist[int(ind[0])]   # Print the contig name for 
+                                             # the chosen data point. But 
+                                             # for cases where two or more
+                                             # data points are chosen 
+                                             # because they are close 
+                                             # together in the plot, it 
+                                             # only prints one... So it's
+                                             # not a great solution. I'm 
+                                             # working on it.
+        print contigname
+#        print 'Number', ind, namelist[int(ind[0])], np.take(xlist, ind), \
+#              np.take(ylist, ind)	# Just a row used for checking that 
+                                        # the right stuff is printed
+        return contigname
+
+    def format_coord(x, y):
+        if contigname:
+            return 'x=%.4f, y=%.4f, name: %s'%(x, y, contigname)
+        else:
+            return 'x=%.4f, y=%.4f'%(x, y)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.scatter(xlist, ylist, picker=True)
     plt.suptitle('GC - Length', fontsize = 20)
     plt.ylabel('GC content (%)')
     plt.xlabel('Length (nt)')
+    fig.canvas.mpl_connect('pick_event', onpick)
+    ax.format_coord = format_coord
     plt.show()
 
 
@@ -176,7 +207,7 @@ def main():
     read_file(args.infile)
     if args.coverage:
         read_covfile(args.coverage)
-    for key in dictionary:
+    for key in sorted(dictionary):
         if args.header == True:
             print dictionary[key].header(), '\t',
         if args.length == True:
@@ -202,7 +233,7 @@ def main():
 
 
 
-
+contigname = 'Test'
 dictionary = {}
 
 
@@ -211,4 +242,3 @@ dictionary = {}
 
 if __name__ == "__main__":
     main()
-
