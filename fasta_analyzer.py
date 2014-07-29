@@ -3,8 +3,24 @@
 
 import argparse
 import sys
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
+
+# Started to work on a solution to install matplotlib with pip. Realized that
+# perhaps people don't always have pip either... Perhaps it's better to use 
+# easy_install if people generally have that one...?
+
+#try:
+#    from matplotlib import pyplot as plt
+#except ImportError:
+#    print >> sys.stderr, 'ERROR: The library "matplotlib" is not installed\n'
+#    answer = raw_input('Would you like to install it now using "sudo pip \
+#                        install matplotlib"? [y/n]: ')
+#if answer == y or Y:
+#    print 'Running "sudo pip install matplotlib"...'
+
+    
+
 
 
 
@@ -99,8 +115,17 @@ class Fasta(object):
 
 
 
+
+class conname(object):
+    def __init__(self, name):
+        self.name = name
+
+
+
+
+
 # Read coverage file and add coverage for each contig to the dictionary.
-def read_covfile(infile):
+def read_covfile(infile, dictionary):
     infile.seek(0)
     for line in infile:
         name = line.split('\t')[0]
@@ -117,6 +142,7 @@ def read_covfile(infile):
 
 # Read fasta file.
 def read_file(infile):
+    dictionary = {} 
     infile.seek(0)
     name, seq = None, []
     for line in infile:
@@ -138,8 +164,9 @@ def read_file(infile):
 
 
 
-# Plot GC content against length. Not done yet. 
-def lenplot():
+# Plot GC content against length.
+def lenplot(dictionary):
+    contig = conname(None)
     xlist = []
     ylist = []
     namelist = []
@@ -160,14 +187,18 @@ def lenplot():
                                              # not a great solution. I'm 
                                              # working on it.
         print contigname
+        contig.name = contigname
 #        print 'Number', ind, namelist[int(ind[0])], np.take(xlist, ind), \
 #              np.take(ylist, ind)	# Just a row used for checking that 
                                         # the right stuff is printed
-        return contigname
 
+    # format_coord shows contig.name (if any) in the lower right corner of 
+    # the plot, where x and y coordinates are shown. However, as it is now,
+    # the cursor needs to be moved slightly before the text is updated with 
+    # the new contigname..
     def format_coord(x, y):
-        if contigname:
-            return 'x=%.4f, y=%.4f, name: %s'%(x, y, contigname)
+        if contig.name:
+            return 'x=%.4f, y=%.4f, name: %s'%(x, y, contig.name)
         else:
             return 'x=%.4f, y=%.4f'%(x, y)
 
@@ -186,7 +217,7 @@ def lenplot():
 
 
 # Plot GC content against coverage.
-def covplot():
+def covplot(dictionary):
     xlist = []
     ylist = []
     for key in dictionary:
@@ -202,11 +233,19 @@ def covplot():
 
 
 
+# tests for 'nan'
+def isNaN(num):
+    return num != num
+
+
+
+
+
 # Print the outputs that were chosen.
 def main():
-    read_file(args.infile)
+    dictionary = read_file(args.infile)
     if args.coverage:
-        read_covfile(args.coverage)
+        read_covfile(args.coverage, dictionary)
     for key in sorted(dictionary):
         if args.header == True:
             print dictionary[key].header(), '\t',
@@ -217,24 +256,21 @@ def main():
         if args.ncontent == True:
             print dictionary[key].ncontent(), '\t',
         if args.coverage:
-            print dictionary[key].coverage(),
+            if isNaN(dictionary[key].coverage()):
+                print >> sys.stderr, dictionary[key].coverage(),
+            else:
+                print dictionary[key].coverage(),
         if len(sys.argv) > 2:    # If no flags are given, 
                                  # no line breaks are printed.
             print	# Just there to introduce a line break.
     if args.lenplot == True:
-        lenplot()
+        lenplot(dictionary)
     if args.covplot == True:
         try:
-            covplot()
+            covplot(dictionary)
         except:
-            print "ERROR: Correct coverage file not supplied."
+            sys.stderr.write("ERROR: Correct coverage file not supplied?")
     args.infile.close()
-
-
-
-
-contigname = 'Test'
-dictionary = {}
 
 
 
