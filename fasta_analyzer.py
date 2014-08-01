@@ -62,12 +62,24 @@ parser.add_argument("-n", "--ncontent",
                     help = "Calculate the number of N in each sequence.",
                     action = "store_true")
 
-parser.add_argument("-p", "--lenplot", 
+parser.add_argument("-lg", "--lengcplot", 
                     help = "Plot GC content against length.", 
                     action = "store_true")
 
-parser.add_argument("-c", "--covplot",
+parser.add_argument("-cg", "--covgcplot",
                     help = "Plot GC content against coverage.",
+                    action = "store_true")
+
+parser.add_argument("-cl", "--covlenplot",
+                    help = "Plot coverage against length.",
+                    action = "store_true")
+
+parser.add_argument("-cf", "--covfreqplot",
+                    help = " Histogram over coverage.",
+                    action = "store_true")
+
+parser.add_argument("-lf", "--lenfreqplot",
+                    help = "Histogram over length.",
                     action = "store_true")
 
 args = parser.parse_args()
@@ -83,7 +95,7 @@ class Fasta(object):
         self.name = name[1:].rstrip()
         self.seq = seq.lower()
         self.cov = float('nan')	# For missing coverage values, 
-                                # covplot will not plot.
+                                # covgcplot will not plot.
 
     def header(self):
         return self.name
@@ -165,7 +177,7 @@ def read_file(infile):
 
 
 # Plot GC content against length.
-def lenplot(dictionary):
+def lengcplot(dictionary):
     contig = conname(None)
     xlist = []
     ylist = []
@@ -183,9 +195,10 @@ def lenplot(dictionary):
                                              # data points are chosen 
                                              # because they are close 
                                              # together in the plot, it 
-                                             # only prints one... So it's
-                                             # not a great solution. I'm 
-                                             # working on it.
+                                             # only prints one. But that is
+                                             # less of a problem now that
+                                             # the picking tolerance is set to
+                                             # a very low value (0.5).
         print contigname
         contig.name = contigname
 #        print 'Number', ind, namelist[int(ind[0])], np.take(xlist, ind), \
@@ -204,11 +217,14 @@ def lenplot(dictionary):
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    plt.scatter(xlist, ylist, picker=True)
+    plt.scatter(xlist, ylist, picker=0.5) # Choose a higher picker value for
+                                          # higher tolerance when picking 
+                                          # points in the plot.
     plt.suptitle('GC - Length', fontsize = 20)
     plt.ylabel('GC content (%)')
     plt.xlabel('Length (nt)')
     fig.canvas.mpl_connect('pick_event', onpick)
+    ax.annotate(contig.name, xy=(300000, 40), xytext = (350000, 45))
     ax.format_coord = format_coord
     plt.show()
 
@@ -217,16 +233,103 @@ def lenplot(dictionary):
 
 
 # Plot GC content against coverage.
-def covplot(dictionary):
-    xlist = []
-    ylist = []
+def covgcplot(dictionary):
+    xlist1, xlist2, xlist3 = [], [], []
+    ylist1, ylist2, ylist3 = [], [], []
     for key in dictionary:
-        xlist.append(dictionary[key].gccount())
-        ylist.append(dictionary[key].coverage())
-    plt.scatter(xlist, ylist)
-    plt.suptitle('GC - Coverage', fontsize = 20)
+        if dictionary[key].length() > 100000:
+            xlist3.append(dictionary[key].coverage())
+            ylist3.append(dictionary[key].gccount())
+        elif 10000 <= dictionary[key].length() <= 100000:
+            xlist2.append(dictionary[key].coverage())
+            ylist2.append(dictionary[key].gccount())
+        elif dictionary[key].length() < 10000:
+            xlist1.append(dictionary[key].coverage())
+            ylist1.append(dictionary[key].gccount())
+        else:
+            pass
+    series1 = plt.scatter(xlist1, ylist1, color = 'k', 
+                          marker = (5, 2, 0), label="<10k bp")
+    series2 = plt.scatter(xlist2, ylist2, facecolors = 'none', 
+                          edgecolors = 'b', marker = 'o', 
+                          label="10-100k bp")
+    series3 = plt.scatter(xlist3, ylist3, facecolors = 'none', 
+                          edgecolors = 'r', marker = 'o', 
+                          label=">100k bp")
+    plt.suptitle('Coverage - GC', fontsize = 20)
     plt.ylabel('Coverage')
     plt.xlabel('GC content (%)')
+    leg = plt.legend()
+    leg.get_frame().set_alpha(0.5) # Transparent figure legend so that data
+                                   # hiding behind it will still be visible.
+    plt.show()
+
+
+
+
+def covlenplot(dictionary):
+    xlist1, xlist2, xlist3 = [], [], []
+    ylist1, ylist2, ylist3 = [], [], []
+    for key in dictionary:
+        if dictionary[key].gccount() > 55:
+            xlist3.append(dictionary[key].coverage())
+            ylist3.append(dictionary[key].length())
+        elif 40 <= dictionary[key].gccount() <= 55:
+            xlist2.append(dictionary[key].coverage())
+            ylist2.append(dictionary[key].length())
+        elif dictionary[key].gccount() < 40:
+            xlist1.append(dictionary[key].coverage())
+            ylist1.append(dictionary[key].length())
+        else:
+            pass
+    series1 = plt.scatter(xlist1, ylist1, color = 'k', 
+                          marker = 'o', label="<40%")
+    series2 = plt.scatter(xlist2, ylist2, color = 'b', 
+                          marker = 'o', label="40-55%")
+    series3 = plt.scatter(xlist3, ylist3, color = 'r', 
+                          marker = 'o', label=">55%")
+    plt.suptitle('Length - Coverage', fontsize = 20)
+    plt.ylabel('Contig length')
+    plt.xlabel('Coverage')
+    leg = plt.legend(title = '% GC', scatterpoints = 1, fancybox = True, )
+    leg.get_frame().set_alpha(0.5)
+    plt.show()
+
+
+
+
+
+def covfreqplot(dictionary):
+    histlist = []
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for key in dictionary:
+        if isNaN(dictionary[key].coverage()) == False:
+            histlist.append(dictionary[key].coverage())
+    plt.hist(histlist, bins=np.logspace(0.1, 7, 200)) # These values can be
+                                                      # changed to get another
+                                                      # range or bin size.
+    ax.set_xscale('log')
+    plt.suptitle('Coverage histogram', fontsize = 20)
+    plt.xlabel('Coverage')
+    plt.ylabel('Frequency')
+    plt.show()
+
+
+
+
+
+def lenfreqplot(dictionary):
+    histlist = []
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    for key in dictionary:
+        histlist.append(dictionary[key].length())
+    plt.hist(histlist, bins=np.logspace(0.1, 7, 200))
+    ax.set_xscale('log')
+    plt.suptitle('Length histogram', fontsize = 20)
+    plt.xlabel('Length')
+    plt.ylabel('Frequency')
     plt.show()
 
 
@@ -263,13 +366,19 @@ def main():
         if len(sys.argv) > 2:    # If no flags are given, 
                                  # no line breaks are printed.
             print	# Just there to introduce a line break.
-    if args.lenplot == True:
-        lenplot(dictionary)
-    if args.covplot == True:
+    if args.lengcplot == True:
+        lengcplot(dictionary)
+    if args.covgcplot == True:
         try:
-            covplot(dictionary)
+            covgcplot(dictionary)
         except:
             sys.stderr.write("ERROR: Correct coverage file not supplied?")
+    if args.covlenplot == True:
+        covlenplot(dictionary)
+    if args.covfreqplot == True:
+        covfreqplot(dictionary)
+    if args.lenfreqplot == True:
+        lenfreqplot(dictionary)
     args.infile.close()
 
 
