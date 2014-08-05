@@ -74,11 +74,11 @@ parser.add_argument("-cl", "--covlenplot",
                     help = "Plot coverage against length.",
                     action = "store_true")
 
-parser.add_argument("-cf", "--covfreqplot",
+parser.add_argument("-ch", "--covhistogram",
                     help = " Histogram over coverage.",
                     action = "store_true")
 
-parser.add_argument("-lf", "--lenfreqplot",
+parser.add_argument("-lh", "--lenhistogram",
                     help = "Histogram over length.",
                     action = "store_true")
 
@@ -201,9 +201,17 @@ def lengcplot(dictionary):
                                              # a very low value (0.5).
         print contigname
         contig.name = contigname
+        mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
+        annotation = ax.text(0.9, 0.05, contig.name, 
+                             horizontalalignment='center', 
+                             verticalalignment='center', 
+                             transform = ax.transAxes)
+        fig.canvas.draw()
+        annotation.remove()
+        ax.lines.remove(mark)
 #        print 'Number', ind, namelist[int(ind[0])], np.take(xlist, ind), \
 #              np.take(ylist, ind)	# Just a row used for checking that 
-                                        # the right stuff is printed
+                                   	# the right stuff is printed
 
     # format_coord shows contig.name (if any) in the lower right corner of 
     # the plot, where x and y coordinates are shown. However, as it is now,
@@ -224,10 +232,8 @@ def lengcplot(dictionary):
     plt.ylabel('GC content (%)')
     plt.xlabel('Length (nt)')
     fig.canvas.mpl_connect('pick_event', onpick)
-    ax.annotate(contig.name, xy=(300000, 40), xytext = (350000, 45))
     ax.format_coord = format_coord
     plt.show()
-
 
 
 
@@ -299,7 +305,7 @@ def covlenplot(dictionary):
 
 
 
-def covfreqplot(dictionary):
+def covhistogram(dictionary):
     histlist = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -319,7 +325,7 @@ def covfreqplot(dictionary):
 
 
 
-def lenfreqplot(dictionary):
+def lenhistogram(dictionary):
     histlist = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -375,10 +381,10 @@ def main():
             sys.stderr.write("ERROR: Correct coverage file not supplied?")
     if args.covlenplot == True:
         covlenplot(dictionary)
-    if args.covfreqplot == True:
-        covfreqplot(dictionary)
-    if args.lenfreqplot == True:
-        lenfreqplot(dictionary)
+    if args.covhistogram == True:
+        covhistogram(dictionary)
+    if args.lenhistogram == True:
+        lenhistogram(dictionary)
     args.infile.close()
 
 
