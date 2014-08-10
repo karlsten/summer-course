@@ -238,11 +238,17 @@ def lengcplot(dictionary):
 
 
 
+
 # Plot GC content against coverage.
 def covgcplot(dictionary):
-    xlist1, xlist2, xlist3 = [], [], []
-    ylist1, ylist2, ylist3 = [], [], []
+    contig = conname(None)
+    namelist = []
+    xlist, xlist1, xlist2, xlist3 = [], [], [], []
+    ylist, ylist1, ylist2, ylist3 = [], [], [], []
     for key in dictionary:
+        xlist.append(dictionary[key].coverage())
+        ylist.append(dictionary[key].gccount())
+        namelist.append(dictionary[key].header())
         if dictionary[key].length() > 100000:
             xlist3.append(dictionary[key].coverage())
             ylist3.append(dictionary[key].gccount())
@@ -254,6 +260,32 @@ def covgcplot(dictionary):
             ylist1.append(dictionary[key].gccount())
         else:
             pass
+    def onpick(event):
+        ind = event.ind
+        contigname = namelist[int(ind[0])]
+        print contigname
+        contig.name = contigname
+        mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
+        annotation = ax.text(0.9, 0.05, contig.name, 
+                             horizontalalignment='center', 
+                             verticalalignment='center', 
+                             transform = ax.transAxes)
+        fig.canvas.draw()
+        annotation.remove()
+        ax.lines.remove(mark)
+
+    def format_coord(x, y):
+        if contig.name:
+            return 'x=%.4f, y=%.4f, name: %s'%(x, y, contig.name)
+        else:
+            return 'x=%.4f, y=%.4f'%(x, y)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.canvas.mpl_connect('pick_event', onpick)
+    ax.format_coord = format_coord
+    series = plt.scatter(xlist, ylist, marker = 'o', picker = 0.5, 
+                         facecolors = 'none', edgecolors = 'none')
     series1 = plt.scatter(xlist1, ylist1, color = 'k', 
                           marker = (5, 2, 0), label="<10k bp")
     series2 = plt.scatter(xlist2, ylist2, facecolors = 'none', 
@@ -273,10 +305,16 @@ def covgcplot(dictionary):
 
 
 
+
 def covlenplot(dictionary):
-    xlist1, xlist2, xlist3 = [], [], []
-    ylist1, ylist2, ylist3 = [], [], []
+    contig = conname(None)
+    namelist = []
+    xlist, xlist1, xlist2, xlist3 = [], [], [], []
+    ylist, ylist1, ylist2, ylist3 = [], [], [], []
     for key in dictionary:
+        xlist.append(dictionary[key].coverage())
+        ylist.append(dictionary[key].length())
+        namelist.append(dictionary[key].header())
         if dictionary[key].gccount() > 55:
             xlist3.append(dictionary[key].coverage())
             ylist3.append(dictionary[key].length())
@@ -288,6 +326,33 @@ def covlenplot(dictionary):
             ylist1.append(dictionary[key].length())
         else:
             pass
+
+    def onpick(event):
+        ind = event.ind
+        contigname = namelist[int(ind[0])]
+        print contigname
+        contig.name = contigname
+        mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], 
+                        color = 'c', marker = 'o')
+        annotation = ax.text(0.9, 0.05, contig.name, 
+                             horizontalalignment='center', 
+                             verticalalignment='center', 
+                             transform = ax.transAxes)
+        fig.canvas.draw()
+        annotation.remove()
+        ax.lines.remove(mark)
+
+    def format_coord(x, y):
+        if contig.name:
+            return 'x=%.4f, y=%.4f, name: %s'%(x, y, contig.name)
+        else:
+            return 'x=%.4f, y=%.4f'%(x, y)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    fig.canvas.mpl_connect('pick_event', onpick)
+    ax.format_coord = format_coord
+    series = plt.scatter(xlist, ylist, marker = 'o', facecolors = 'none', 
+                         edgecolors = 'none', picker = 0.5)
     series1 = plt.scatter(xlist1, ylist1, color = 'k', 
                           marker = 'o', label="<40%")
     series2 = plt.scatter(xlist2, ylist2, color = 'b', 
@@ -375,10 +440,10 @@ def main():
     if args.lengcplot == True:
         lengcplot(dictionary)
     if args.covgcplot == True:
-        try:
-            covgcplot(dictionary)
-        except:
-            sys.stderr.write("ERROR: Correct coverage file not supplied?")
+#        try:
+        covgcplot(dictionary)
+#        except:
+#            sys.stderr.write("ERROR: Correct coverage file not supplied?")
     if args.covlenplot == True:
         covlenplot(dictionary)
     if args.covhistogram == True:
