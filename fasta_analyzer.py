@@ -6,9 +6,23 @@ import sys
 import numpy as np
 from matplotlib import pyplot as plt
 
-# Started to work on a solution to install matplotlib with pip. Realized that
-# perhaps people don't always have pip either... Perhaps it's better to use 
-# easy_install if people generally have that one...?
+
+# This section is based on code from 
+# https://github.com/mtop/speciesgeocoder/blob/master/geocoder.py 
+# by Mats Töpel:
+# (also, it's not done yet)
+#try:
+#    import argparse
+#except ImportError:
+#    print >> sys.stderr, 'ERROR: The module "argparse" is not installed\n'
+#    answer = raw_input('Would you like to install it now using "sudo pip \
+#                        install argparse"? [y/n]: ')
+#    if answer == 'y' or 'Y':
+#        print 'Running "sudo pip install argparse"...'
+#        from subprocess import call
+#        call(["sudo", "pip", "install", "argparse"])
+#    else:
+#        sys.exit("ERROR: Exiting ____________________")
 
 #try:
 #    from matplotlib import pyplot as plt
@@ -16,10 +30,13 @@ from matplotlib import pyplot as plt
 #    print >> sys.stderr, 'ERROR: The library "matplotlib" is not installed\n'
 #    answer = raw_input('Would you like to install it now using "sudo pip \
 #                        install matplotlib"? [y/n]: ')
-#if answer == y or Y:
-#    print 'Running "sudo pip install matplotlib"...'
+#    if answer == 'y' or 'Y':
+#        print 'Running "sudo pip install matplotlib"...'
+#        from subprocess import call
+#        call(["sudo", "pip", "install", "matplotlib"])
+#    else:
+#        sys.exit("ERROR: Exiting ____________________")
 
-    
 
 
 
@@ -199,7 +216,6 @@ def lengcplot(dictionary):
                                              # less of a problem now that
                                              # the picking tolerance is set to
                                              # a very low value (0.5).
-        print contigname
         contig.name = contigname
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
         annotation = ax.text(0.9, 0.05, contig.name, 
@@ -246,24 +262,24 @@ def covgcplot(dictionary):
     xlist, xlist1, xlist2, xlist3 = [], [], [], []
     ylist, ylist1, ylist2, ylist3 = [], [], [], []
     for key in dictionary:
-        xlist.append(dictionary[key].coverage())
-        ylist.append(dictionary[key].gccount())
-        namelist.append(dictionary[key].header())
-        if dictionary[key].length() > 100000:
-            xlist3.append(dictionary[key].coverage())
-            ylist3.append(dictionary[key].gccount())
-        elif 10000 <= dictionary[key].length() <= 100000:
-            xlist2.append(dictionary[key].coverage())
-            ylist2.append(dictionary[key].gccount())
-        elif dictionary[key].length() < 10000:
-            xlist1.append(dictionary[key].coverage())
-            ylist1.append(dictionary[key].gccount())
-        else:
-            pass
+        if isNaN(dictionary[key].coverage()) == False:
+            xlist.append(dictionary[key].coverage())
+            ylist.append(dictionary[key].gccount())
+            namelist.append(dictionary[key].header())
+            if dictionary[key].length() > 100000:
+                xlist3.append(dictionary[key].coverage())
+                ylist3.append(dictionary[key].gccount())
+            elif 10000 <= dictionary[key].length() <= 100000:
+                xlist2.append(dictionary[key].coverage())
+                ylist2.append(dictionary[key].gccount())
+            elif dictionary[key].length() < 10000:
+                xlist1.append(dictionary[key].coverage())
+                ylist1.append(dictionary[key].gccount())
+            else:
+                pass
     def onpick(event):
         ind = event.ind
         contigname = namelist[int(ind[0])]
-        print contigname
         contig.name = contigname
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
         annotation = ax.text(0.9, 0.05, contig.name, 
@@ -295,9 +311,9 @@ def covgcplot(dictionary):
                           edgecolors = 'r', marker = 'o', 
                           label=">100k bp")
     plt.suptitle('Coverage - GC', fontsize = 20)
-    plt.ylabel('Coverage')
-    plt.xlabel('GC content (%)')
-    leg = plt.legend()
+    plt.ylabel('GC content (%)')
+    plt.xlabel('Coverage')
+    leg = plt.legend(scatterpoints = 1)
     leg.get_frame().set_alpha(0.5) # Transparent figure legend so that data
                                    # hiding behind it will still be visible.
     plt.show()
@@ -312,28 +328,28 @@ def covlenplot(dictionary):
     xlist, xlist1, xlist2, xlist3 = [], [], [], []
     ylist, ylist1, ylist2, ylist3 = [], [], [], []
     for key in dictionary:
-        xlist.append(dictionary[key].coverage())
-        ylist.append(dictionary[key].length())
-        namelist.append(dictionary[key].header())
-        if dictionary[key].gccount() > 55:
-            xlist3.append(dictionary[key].coverage())
-            ylist3.append(dictionary[key].length())
-        elif 40 <= dictionary[key].gccount() <= 55:
-            xlist2.append(dictionary[key].coverage())
-            ylist2.append(dictionary[key].length())
-        elif dictionary[key].gccount() < 40:
-            xlist1.append(dictionary[key].coverage())
-            ylist1.append(dictionary[key].length())
-        else:
-            pass
+        if isNaN(dictionary[key].coverage()) == False:
+            xlist.append(dictionary[key].coverage())
+            ylist.append(dictionary[key].length())
+            namelist.append(dictionary[key].header())
+            if dictionary[key].gccount() > 55:
+                xlist3.append(dictionary[key].coverage())
+                ylist3.append(dictionary[key].length())
+            elif 40 <= dictionary[key].gccount() <= 55:
+                xlist2.append(dictionary[key].coverage())
+                ylist2.append(dictionary[key].length())
+            elif dictionary[key].gccount() < 40:
+                xlist1.append(dictionary[key].coverage())
+                ylist1.append(dictionary[key].length())
+            else:
+                pass
 
     def onpick(event):
         ind = event.ind
         contigname = namelist[int(ind[0])]
-        print contigname
         contig.name = contigname
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], 
-                        color = 'c', marker = 'o')
+                            color = 'c', marker = 'o')
         annotation = ax.text(0.9, 0.05, contig.name, 
                              horizontalalignment='center', 
                              verticalalignment='center', 
@@ -347,6 +363,7 @@ def covlenplot(dictionary):
             return 'x=%.4f, y=%.4f, name: %s'%(x, y, contig.name)
         else:
             return 'x=%.4f, y=%.4f'%(x, y)
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     fig.canvas.mpl_connect('pick_event', onpick)
@@ -362,7 +379,7 @@ def covlenplot(dictionary):
     plt.suptitle('Length - Coverage', fontsize = 20)
     plt.ylabel('Contig length')
     plt.xlabel('Coverage')
-    leg = plt.legend(title = '% GC', scatterpoints = 1, fancybox = True, )
+    leg = plt.legend(title = '% GC', scatterpoints = 1)
     leg.get_frame().set_alpha(0.5)
     plt.show()
 
@@ -440,10 +457,10 @@ def main():
     if args.lengcplot == True:
         lengcplot(dictionary)
     if args.covgcplot == True:
-#        try:
-        covgcplot(dictionary)
-#        except:
-#            sys.stderr.write("ERROR: Correct coverage file not supplied?")
+        try:
+            covgcplot(dictionary)
+        except:
+            sys.stderr.write("ERROR: Correct coverage file not supplied?")
     if args.covlenplot == True:
         covlenplot(dictionary)
     if args.covhistogram == True:
