@@ -132,7 +132,7 @@ class Fasta(object):
         if self.total == 0:
             self.content = float('nan')
         else:
-            self.content = round((float(self.gc) / self.total) * 100, 3)
+            self.content = round((float(self.gc) / self.total) * 100, 1)
         return self.content
 
     def coverage(self):
@@ -457,14 +457,23 @@ def main():
     if args.lengcplot == True:
         lengcplot(dictionary)
     if args.covgcplot == True:
-        try:
-            covgcplot(dictionary)
-        except:
-            sys.stderr.write("ERROR: Correct coverage file not supplied?")
+        if args.coverage:
+            try:
+                covgcplot(dictionary)
+            except:
+                sys.stderr.write("ERROR: Correct coverage file not supplied?")
+        else:
+            sys.stderr.write("ERROR: Can't run function 'covgcplot'. No coverage file supplied.\n")
     if args.covlenplot == True:
-        covlenplot(dictionary)
+        if args.coverage:
+            covlenplot(dictionary)
+        else:
+            sys.stderr.write("ERROR: Can't run function 'covlenplot'. No coverage file supplied.\n")
     if args.covhistogram == True:
-        covhistogram(dictionary)
+        if args.coverage:
+            covhistogram(dictionary)
+        else:
+            sys.stderr.write("ERROR: Can't run function 'covhistogram'. No coverage file supplied.\n")
     if args.lenhistogram == True:
         lenhistogram(dictionary)
     args.infile.close()
