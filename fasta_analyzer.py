@@ -217,8 +217,13 @@ def lengcplot(dictionary):
                                              # the picking tolerance is set to
                                              # a very low value (0.5).
         contig.name = contigname
+        contig_info = "%s \n Length: %r \n GC: %r \n Coverage: %r \n N: %r" \
+                      %(contig.name, dictionary[contig.name].length(), 
+                      dictionary[contig.name].gccount(), 
+                      dictionary[contig.name].coverage(), 
+                      dictionary[contig.name].ncontent())
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
-        annotation = ax.text(0.9, 0.05, contig.name, 
+        annotation = ax.text(0.8, 0.15, contig_info, 
                              horizontalalignment='center', 
                              verticalalignment='center', 
                              transform = ax.transAxes)
@@ -281,8 +286,13 @@ def covgcplot(dictionary):
         ind = event.ind
         contigname = namelist[int(ind[0])]
         contig.name = contigname
+        contig_info = "%s \n Length: %r \n GC: %r \n Coverage: %r \n N: %r" \
+                      %(contig.name, dictionary[contig.name].length(), 
+                      dictionary[contig.name].gccount(), 
+                      dictionary[contig.name].coverage(), 
+                      dictionary[contig.name].ncontent())
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
-        annotation = ax.text(0.9, 0.05, contig.name, 
+        annotation = ax.text(0.8, 0.15, contig_info, 
                              horizontalalignment='center', 
                              verticalalignment='center', 
                              transform = ax.transAxes)
@@ -348,9 +358,14 @@ def covlenplot(dictionary):
         ind = event.ind
         contigname = namelist[int(ind[0])]
         contig.name = contigname
+        contig_info = "%s \n Length: %r \n GC: %r \n Coverage: %r \n N: %r" \
+                      %(contig.name, dictionary[contig.name].length(), 
+                      dictionary[contig.name].gccount(), 
+                      dictionary[contig.name].coverage(), 
+                      dictionary[contig.name].ncontent())
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], 
                             color = 'c', marker = 'o')
-        annotation = ax.text(0.9, 0.05, contig.name, 
+        annotation = ax.text(0.8, 0.15, contig_info, 
                              horizontalalignment='center', 
                              verticalalignment='center', 
                              transform = ax.transAxes)
