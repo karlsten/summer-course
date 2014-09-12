@@ -7,6 +7,31 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
+
+
+
+# Copyright (C) 2014 Sandra Karlsten. sandra.karlsten@gmail.com
+#
+# Citation: If you use this version of the program, please cite;
+# Sandra Karlsten (2014) 
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+
+
+
+
 # This section is based on code from 
 # https://github.com/mtop/speciesgeocoder/blob/master/geocoder.py 
 # by Mats Töpel:
@@ -46,12 +71,14 @@ from matplotlib import pyplot as plt
 
 
 
+
+
 parser = argparse.ArgumentParser(description = 
-                                 """Calculate length and/or GC content for 
-                                    sequences from a fasta file. The result 
-                                    is printed to stdout and saved in lists 
-                                    'gclist' for GC content and 'lengthlist'
-                                    for length""")
+                                 """Analyze data from a fasta file and the 
+                                    corresponding coverage file by calculating
+                                    length, GC content and N content and by 
+                                    creating scatter plots and histograms. 
+                                    """)
 
 parser.add_argument("infile", 
                     type = argparse.FileType('r'), 
@@ -99,6 +126,14 @@ parser.add_argument("-lh", "--lenhistogram",
                     help = "Histogram over length.",
                     action = "store_true")
 
+parser.add_argument("-all", "--allflags",
+                    help = "Shortcut for using all flags.", # Plot functions 
+                    action = "store_true")                  # that plot 
+                                                            # coverage will 
+                                                            # not be used if 
+                                                            # no coverage file
+                                                            # is provided.
+
 args = parser.parse_args()
 
 
@@ -144,7 +179,8 @@ class Fasta(object):
 
 
 
-
+# Store the contig name so that it is easily available to the onpick and 
+# format_coord functions.
 class conname(object):
     def __init__(self, name):
         self.name = name
@@ -230,10 +266,6 @@ def lengcplot(dictionary):
         fig.canvas.draw()
         annotation.remove()
         ax.lines.remove(mark)
-#        print 'Number', ind, namelist[int(ind[0])], np.take(xlist, ind), \
-#              np.take(ylist, ind)	# Just a row used for checking that 
-                                   	# the right stuff is printed
-
     # format_coord shows contig.name (if any) in the lower right corner of 
     # the plot, where x and y coordinates are shown. However, as it is now,
     # the cursor needs to be moved slightly before the text is updated with 
@@ -255,6 +287,7 @@ def lengcplot(dictionary):
     fig.canvas.mpl_connect('pick_event', onpick)
     ax.format_coord = format_coord
     plt.show()
+    return xlist, ylist, namelist
 
 
 
@@ -327,11 +360,14 @@ def covgcplot(dictionary):
     leg.get_frame().set_alpha(0.5) # Transparent figure legend so that data
                                    # hiding behind it will still be visible.
     plt.show()
+    return xlist, xlist1, xlist2, xlist3, ylist, ylist1, ylist2, ylist3,\
+    namelist
 
 
 
 
 
+# Plot coverage against length.
 def covlenplot(dictionary):
     contig = conname(None)
     namelist = []
@@ -397,11 +433,14 @@ def covlenplot(dictionary):
     leg = plt.legend(title = '% GC', scatterpoints = 1)
     leg.get_frame().set_alpha(0.5)
     plt.show()
+    return xlist, xlist1, xlist2, xlist3, ylist, ylist1, ylist2, ylist3,\
+    namelist
 
 
 
 
 
+# Create a histogram over coverage.
 def covhistogram(dictionary):
     histlist = []
     fig = plt.figure()
@@ -417,11 +456,13 @@ def covhistogram(dictionary):
     plt.xlabel('Coverage')
     plt.ylabel('Frequency')
     plt.show()
+    return histlist
 
 
 
 
 
+# Create a histogram over length
 def lenhistogram(dictionary):
     histlist = []
     fig = plt.figure()
@@ -434,6 +475,7 @@ def lenhistogram(dictionary):
     plt.xlabel('Length')
     plt.ylabel('Frequency')
     plt.show()
+    return histlist
 
 
 
@@ -452,6 +494,17 @@ def main():
     dictionary = read_file(args.infile)
     if args.coverage:
         read_covfile(args.coverage, dictionary)
+    if args.allflags: # If "-all"-flag is given, set flags to True.
+        args.header = True
+        args.length = True
+        args.gccontent = True
+        args.ncontent = True
+        args.lengcplot = True
+        args.lenhistogram = True
+        if args.coverage:
+            args.covgcplot = True
+            args.covlenplot = True
+            args.covhistogram = True
     for key in sorted(dictionary):
         if args.header == True:
             print dictionary[key].header(), '\t',
@@ -478,20 +531,25 @@ def main():
             except:
                 sys.stderr.write("ERROR: Correct coverage file not supplied?")
         else:
-            sys.stderr.write("ERROR: Can't run function 'covgcplot'. No coverage file supplied.\n")
+            sys.stderr.write("ERROR: Can't run function 'covgcplot'. \
+                              No coverage file supplied.\n")
     if args.covlenplot == True:
         if args.coverage:
             covlenplot(dictionary)
         else:
-            sys.stderr.write("ERROR: Can't run function 'covlenplot'. No coverage file supplied.\n")
+            sys.stderr.write("ERROR: Can't run function 'covlenplot'. \
+                              No coverage file supplied.\n")
     if args.covhistogram == True:
         if args.coverage:
             covhistogram(dictionary)
         else:
-            sys.stderr.write("ERROR: Can't run function 'covhistogram'. No coverage file supplied.\n")
+            sys.stderr.write("ERROR: Can't run function 'covhistogram'. \
+                              No coverage file supplied.\n")
     if args.lenhistogram == True:
         lenhistogram(dictionary)
     args.infile.close()
+    if args.coverage:
+        args.coverage.close()
 
 
 
