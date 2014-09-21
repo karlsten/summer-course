@@ -1,32 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+"""
+Copyright (C) 2014 Sandra Karlsten. sandra.karlsten@gmail.com
+
+Citation: If you use this version of the program, please cite;
+Sandra Karlsten (2014) 
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import argparse
 import sys
 import numpy as np
 from matplotlib import pyplot as plt
-
-
-
-
-
-# Copyright (C) 2014 Sandra Karlsten. sandra.karlsten@gmail.com
-#
-# Citation: If you use this version of the program, please cite;
-# Sandra Karlsten (2014) 
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
@@ -73,78 +72,20 @@ from matplotlib import pyplot as plt
 
 
 
-parser = argparse.ArgumentParser(description = 
-                                 """Analyze data from a fasta file and the 
-                                    corresponding coverage file by calculating
-                                    length, GC content and N content and by 
-                                    creating scatter plots and histograms. 
-                                    """)
-
-parser.add_argument("infile", 
-                    type = argparse.FileType('r'), 
-                    help = "Infile in fasta format.", 
-                    default = sys.stdin)
-
-parser.add_argument("coverage",
-                    type = argparse.FileType('r'),
-                    help = "Coverage file (name and coverage separated by tab)",
-                    nargs = '?')
-
-parser.add_argument("-hd", "--header", 
-                    help = "Print sequence headers.", 
-                    action = "store_true")
-
-parser.add_argument("-l", "--length", 
-                    help = "Calculate the length of each sequence.",
-                    action = "store_true")
-
-parser.add_argument("-gc", "--gccontent", 
-                    help = "Calculate the GC content of each sequence.", 
-                    action = "store_true")
-
-parser.add_argument("-n", "--ncontent",
-                    help = "Calculate the number of N in each sequence.",
-                    action = "store_true")
-
-parser.add_argument("-lg", "--lengcplot", 
-                    help = "Plot GC content against length.", 
-                    action = "store_true")
-
-parser.add_argument("-cg", "--covgcplot",
-                    help = "Plot GC content against coverage.",
-                    action = "store_true")
-
-parser.add_argument("-cl", "--covlenplot",
-                    help = "Plot coverage against length.",
-                    action = "store_true")
-
-parser.add_argument("-ch", "--covhistogram",
-                    help = " Histogram over coverage.",
-                    action = "store_true")
-
-parser.add_argument("-lh", "--lenhistogram",
-                    help = "Histogram over length.",
-                    action = "store_true")
-
-parser.add_argument("-all", "--allflags",
-                    help = "Shortcut for using all flags.", # Plot functions 
-                    action = "store_true")                  # that plot 
-                                                            # coverage will 
-                                                            # not be used if 
-                                                            # no coverage file
-                                                            # is provided.
-
-args = parser.parse_args()
+LENGTH_LARGE = 100000
+LENGTH_SMALL = 10000
+GC_LARGE = 55
+GC_SMALL = 40
 
 
 
 
 
-# Each sequence becomes one object of the class Fasta.
 class Fasta(object):
-
+    """Each sequence becomes one object of the class Fasta. 
+    """
     def __init__(self, name, seq):
-        self.name = name[1:].rstrip()
+        self.name = name[1:].rstrip() # The name equals the contig header minus the '>'.
         self.seq = seq.lower()
         self.cov = float('nan')	# For missing coverage values, 
                                 # covgcplot will not plot.
@@ -170,8 +111,11 @@ class Fasta(object):
             self.content = round((float(self.gc) / self.total) * 100, 1)
         return self.content
 
-    def coverage(self):
+    def getcoverage(self):
         return self.cov
+
+    def setcoverage(self, cov):
+        self.cov = cov
 
     def ncontent(self):
         return self.seq.count("n")
@@ -179,9 +123,10 @@ class Fasta(object):
 
 
 
-# Store the contig name so that it is easily available to the onpick and 
-# format_coord functions.
+
 class conname(object):
+    """Store the contig name so that it is easily available to the onpick and 
+    format_coord functions."""
     def __init__(self, name):
         self.name = name
 
@@ -189,24 +134,28 @@ class conname(object):
 
 
 
-# Read coverage file and add coverage for each contig to the dictionary.
 def read_covfile(infile, dictionary):
+    """Read coverage file and add coverage for each contig to the dictionary.
+    The arguments needed are a fasta file and a dictionary where the item is
+    an object of the class Fasta and the key is the name of the contig.
+    """
     infile.seek(0)
     for line in infile:
-        name = line.split('\t')[0]
+        name, cov = line.split('\t')
         if name in dictionary.keys():
             try:
-                dictionary[name].cov = float(line.split('\t')[1].rstrip())
+                dictionary[name].setcoverage(float(cov))
             except:
-                dictionary[name].cov = float('nan')
+                pass
     return dictionary
 
 
 
 
 
-# Read fasta file.
 def read_file(infile):
+    """Read fasta file. The argument needed is a fasta file.
+    """
     dictionary = {} 
     infile.seek(0)
     name, seq = None, []
@@ -229,8 +178,11 @@ def read_file(infile):
 
 
 
-# Plot GC content against length.
 def lengcplot(dictionary):
+    """Plot GC content against length. The argument needed is a dictionary 
+    where the item is an object of the class Fasta and the key is the name 
+    of the contig.
+    """
     contig = conname(None)
     xlist = []
     ylist = []
@@ -241,22 +193,18 @@ def lengcplot(dictionary):
         namelist.append(dictionary[key].header())
 
     def onpick(event):
+        """ Print the contig name for the chosen data point. But for cases where
+        two or more data points are chosen because they are close together in 
+        the plot, it only prints one. But that is less of a problem now that 
+        the picking tolerance is set to a very low value (0.5).
+        """
         ind = event.ind
-        contigname = namelist[int(ind[0])]   # Print the contig name for 
-                                             # the chosen data point. But 
-                                             # for cases where two or more
-                                             # data points are chosen 
-                                             # because they are close 
-                                             # together in the plot, it 
-                                             # only prints one. But that is
-                                             # less of a problem now that
-                                             # the picking tolerance is set to
-                                             # a very low value (0.5).
+        contigname = namelist[int(ind[0])]
         contig.name = contigname
         contig_info = "%s \n Length: %r \n GC: %r \n Coverage: %r \n N: %r" \
                       %(contig.name, dictionary[contig.name].length(), 
                       dictionary[contig.name].gccount(), 
-                      dictionary[contig.name].coverage(), 
+                      dictionary[contig.name].getcoverage(), 
                       dictionary[contig.name].ncontent())
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
         annotation = ax.text(0.8, 0.15, contig_info, 
@@ -266,11 +214,13 @@ def lengcplot(dictionary):
         fig.canvas.draw()
         annotation.remove()
         ax.lines.remove(mark)
-    # format_coord shows contig.name (if any) in the lower right corner of 
-    # the plot, where x and y coordinates are shown. However, as it is now,
-    # the cursor needs to be moved slightly before the text is updated with 
-    # the new contigname..
+
     def format_coord(x, y):
+        """ format_coord shows contig.name (if any) in the lower right corner
+        of the plot, where x and y coordinates are shown. However, as it is now,
+        the cursor needs to be moved slightly before the text is updated with 
+        the new contigname..
+        """
         if contig.name:
             return 'x=%.4f, y=%.4f, name: %s'%(x, y, contig.name)
         else:
@@ -293,25 +243,28 @@ def lengcplot(dictionary):
 
 
 
-# Plot GC content against coverage.
 def covgcplot(dictionary):
+    """Plot GC content against coverage. The argument needed is a dictionary 
+    where the item is an object of the class Fasta and the key is the name 
+    of the contig.
+    """
     contig = conname(None)
     namelist = []
     xlist, xlist1, xlist2, xlist3 = [], [], [], []
     ylist, ylist1, ylist2, ylist3 = [], [], [], []
     for key in dictionary:
-        if isNaN(dictionary[key].coverage()) == False:
-            xlist.append(dictionary[key].coverage())
+        if isNaN(dictionary[key].getcoverage()) == False:
+            xlist.append(dictionary[key].getcoverage())
             ylist.append(dictionary[key].gccount())
             namelist.append(dictionary[key].header())
-            if dictionary[key].length() > 100000:
-                xlist3.append(dictionary[key].coverage())
+            if dictionary[key].length() > LENGTH_LARGE:
+                xlist3.append(dictionary[key].getcoverage())
                 ylist3.append(dictionary[key].gccount())
-            elif 10000 <= dictionary[key].length() <= 100000:
-                xlist2.append(dictionary[key].coverage())
+            elif LENGTH_SMALL <= dictionary[key].length() <= LENGTH_LARGE:
+                xlist2.append(dictionary[key].getcoverage())
                 ylist2.append(dictionary[key].gccount())
-            elif dictionary[key].length() < 10000:
-                xlist1.append(dictionary[key].coverage())
+            elif dictionary[key].length() < LENGTH_SMALL:
+                xlist1.append(dictionary[key].getcoverage())
                 ylist1.append(dictionary[key].gccount())
             else:
                 pass
@@ -322,7 +275,7 @@ def covgcplot(dictionary):
         contig_info = "%s \n Length: %r \n GC: %r \n Coverage: %r \n N: %r" \
                       %(contig.name, dictionary[contig.name].length(), 
                       dictionary[contig.name].gccount(), 
-                      dictionary[contig.name].coverage(), 
+                      dictionary[contig.name].getcoverage(), 
                       dictionary[contig.name].ncontent())
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], color = 'r', marker = 'o')
         annotation = ax.text(0.8, 0.15, contig_info, 
@@ -346,13 +299,13 @@ def covgcplot(dictionary):
     series = plt.scatter(xlist, ylist, marker = 'o', picker = 0.5, 
                          facecolors = 'none', edgecolors = 'none')
     series1 = plt.scatter(xlist1, ylist1, color = 'k', 
-                          marker = (5, 2, 0), label="<10k bp")
+                          marker = (5, 2, 0), label="< %s bp"%(LENGTH_SMALL))
     series2 = plt.scatter(xlist2, ylist2, facecolors = 'none', 
                           edgecolors = 'b', marker = 'o', 
-                          label="10-100k bp")
+                          label="%s - %s bp" %(LENGTH_SMALL, LENGTH_LARGE))
     series3 = plt.scatter(xlist3, ylist3, facecolors = 'none', 
                           edgecolors = 'r', marker = 'o', 
-                          label=">100k bp")
+                          label="> %s bp" %(LENGTH_LARGE))
     plt.suptitle('Coverage - GC', fontsize = 20)
     plt.ylabel('GC content (%)')
     plt.xlabel('Coverage')
@@ -367,25 +320,28 @@ def covgcplot(dictionary):
 
 
 
-# Plot coverage against length.
 def covlenplot(dictionary):
+    """Plot coverage against length. The argument needed is a dictionary 
+    where the item is an object of the class Fasta and the key is the 
+    name of the contig.
+    """
     contig = conname(None)
     namelist = []
     xlist, xlist1, xlist2, xlist3 = [], [], [], []
     ylist, ylist1, ylist2, ylist3 = [], [], [], []
     for key in dictionary:
-        if isNaN(dictionary[key].coverage()) == False:
-            xlist.append(dictionary[key].coverage())
+        if isNaN(dictionary[key].getcoverage()) == False:
+            xlist.append(dictionary[key].getcoverage())
             ylist.append(dictionary[key].length())
             namelist.append(dictionary[key].header())
-            if dictionary[key].gccount() > 55:
-                xlist3.append(dictionary[key].coverage())
+            if dictionary[key].gccount() > GC_LARGE:
+                xlist3.append(dictionary[key].getcoverage())
                 ylist3.append(dictionary[key].length())
-            elif 40 <= dictionary[key].gccount() <= 55:
-                xlist2.append(dictionary[key].coverage())
+            elif GC_SMALL <= dictionary[key].gccount() <= GC_LARGE:
+                xlist2.append(dictionary[key].getcoverage())
                 ylist2.append(dictionary[key].length())
-            elif dictionary[key].gccount() < 40:
-                xlist1.append(dictionary[key].coverage())
+            elif dictionary[key].gccount() < GC_SMALL:
+                xlist1.append(dictionary[key].getcoverage())
                 ylist1.append(dictionary[key].length())
             else:
                 pass
@@ -397,7 +353,7 @@ def covlenplot(dictionary):
         contig_info = "%s \n Length: %r \n GC: %r \n Coverage: %r \n N: %r" \
                       %(contig.name, dictionary[contig.name].length(), 
                       dictionary[contig.name].gccount(), 
-                      dictionary[contig.name].coverage(), 
+                      dictionary[contig.name].getcoverage(), 
                       dictionary[contig.name].ncontent())
         mark, = ax.plot(xlist[ind[0]], ylist[ind[0]], 
                             color = 'c', marker = 'o')
@@ -422,11 +378,11 @@ def covlenplot(dictionary):
     series = plt.scatter(xlist, ylist, marker = 'o', facecolors = 'none', 
                          edgecolors = 'none', picker = 0.5)
     series1 = plt.scatter(xlist1, ylist1, color = 'k', 
-                          marker = 'o', label="<40%")
+                          marker = 'o', label="< %r %%" %(GC_SMALL))
     series2 = plt.scatter(xlist2, ylist2, color = 'b', 
-                          marker = 'o', label="40-55%")
+                          marker = 'o', label=" %r - %r %%" %(GC_SMALL, GC_LARGE))
     series3 = plt.scatter(xlist3, ylist3, color = 'r', 
-                          marker = 'o', label=">55%")
+                          marker = 'o', label="> %r %%" %(GC_LARGE))
     plt.suptitle('Length - Coverage', fontsize = 20)
     plt.ylabel('Contig length')
     plt.xlabel('Coverage')
@@ -440,14 +396,17 @@ def covlenplot(dictionary):
 
 
 
-# Create a histogram over coverage.
 def covhistogram(dictionary):
+    """Create a histogram over coverage. The argument needed is a dictionary 
+    where the item is an object of the class Fasta and the key is the name 
+    of the contig.
+    """
     histlist = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
     for key in dictionary:
-        if isNaN(dictionary[key].coverage()) == False:
-            histlist.append(dictionary[key].coverage())
+        if isNaN(dictionary[key].getcoverage()) == False:
+            histlist.append(dictionary[key].getcoverage())
     plt.hist(histlist, bins=np.logspace(0.1, 7, 200)) # These values can be
                                                       # changed to get another
                                                       # range or bin size.
@@ -462,8 +421,11 @@ def covhistogram(dictionary):
 
 
 
-# Create a histogram over length
 def lenhistogram(dictionary):
+    """Create a histogram over length. The argument needed is a dictionary 
+    where the item is an object of the class Fasta and the key is the name 
+    of the contig.
+    """
     histlist = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -481,16 +443,20 @@ def lenhistogram(dictionary):
 
 
 
-# tests for 'nan'
 def isNaN(num):
+    """tests for 'nan'. The argument needed is the number that is to be tested.
+    """
     return num != num
 
 
 
 
 
-# Print the outputs that were chosen.
-def main():
+def run(args):
+    """ Print the outputs that were chosen. The argument needed is the 
+    parser.parse_args() that determines which flags and infiles the 
+    script can use.
+    """
     dictionary = read_file(args.infile)
     if args.coverage:
         read_covfile(args.coverage, dictionary)
@@ -515,10 +481,10 @@ def main():
         if args.ncontent == True:
             print dictionary[key].ncontent(), '\t',
         if args.coverage:
-            if isNaN(dictionary[key].coverage()):
-                print >> sys.stderr, dictionary[key].coverage(),
+            if isNaN(dictionary[key].getcoverage()):
+                print >> sys.stderr, dictionary[key].getcoverage(),
             else:
-                print dictionary[key].coverage(),
+                print dictionary[key].getcoverage(),
         if len(sys.argv) > 2:    # If no flags are given, 
                                  # no line breaks are printed.
             print	# Just there to introduce a line break.
@@ -556,4 +522,66 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description = 
+                                 """Analyze data from a fasta file and the 
+                                    corresponding coverage file by calculating
+                                    length, GC content and N content and by 
+                                    creating scatter plots and histograms. 
+                                    """)
+
+    parser.add_argument("infile", 
+                    type = argparse.FileType('r'), 
+                    help = "Infile in fasta format.", 
+                    default = sys.stdin)
+
+    parser.add_argument("coverage",
+                    type = argparse.FileType('r'),
+                    help = "Coverage file (name and coverage separated by tab)",
+                    nargs = '?')
+
+    parser.add_argument("-hd", "--header", 
+                    help = "Print sequence headers.", 
+                    action = "store_true")
+
+    parser.add_argument("-l", "--length", 
+                    help = "Calculate the length of each sequence.",
+                    action = "store_true")
+
+    parser.add_argument("-gc", "--gccontent", 
+                    help = "Calculate the GC content of each sequence.", 
+                    action = "store_true")
+
+    parser.add_argument("-n", "--ncontent",
+                    help = "Calculate the number of N in each sequence.",
+                    action = "store_true")
+
+    parser.add_argument("-lg", "--lengcplot", 
+                    help = "Plot GC content against length.", 
+                    action = "store_true")
+
+    parser.add_argument("-cg", "--covgcplot",
+                    help = "Plot GC content against coverage.",
+                    action = "store_true")
+
+    parser.add_argument("-cl", "--covlenplot",
+                    help = "Plot coverage against length.",
+                    action = "store_true")
+
+    parser.add_argument("-ch", "--covhistogram",
+                    help = " Histogram over coverage.",
+                    action = "store_true")
+
+    parser.add_argument("-lh", "--lenhistogram",
+                    help = "Histogram over length.",
+                    action = "store_true")
+
+    parser.add_argument("-all", "--allflags",
+                    help = "Shortcut for using all flags.", # Plot functions 
+                    action = "store_true")                  # that plot 
+                                                            # coverage will 
+                                                            # not be used if 
+                                                            # no coverage file
+                                                            # is provided.
+
+    args = parser.parse_args()
+    run(args)
