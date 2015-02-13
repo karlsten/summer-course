@@ -76,8 +76,6 @@ LENGTH_LARGE = 100000
 LENGTH_SMALL = 10000
 GC_LARGE = 55
 GC_SMALL = 40
-mark = None
-annotation = None
 
 
 
@@ -142,17 +140,13 @@ def read_covfile(infile, dictionary):
     an object of the class Fasta and the key is the name of the contig.
     """
     infile.seek(0)
-    i = 0
     for line in infile:
-        i = i + 1
         name, cov = line.split('\t')
         if name in dictionary.keys():
             try:
                 dictionary[name].setcoverage(float(cov))
             except:
                 pass
-        else:
-            sys.stderr.write("ERROR: Contig names did not match, line %r in coverage file. \n" % i)
     return dictionary
 
 
@@ -199,14 +193,6 @@ def lengcplot(dictionary):
         namelist.append(dictionary[key].header())
 
     def onpick(event):
-        global annotation
-        global mark
-        if mark != None: 
-            try:
-                ax.lines.remove(mark)
-                annotation.remove()
-            except:
-                pass
         """ Print the contig name for the chosen data point. But for cases where
         two or more data points are chosen because they are close together in 
         the plot, it only prints one. But that is less of a problem now that 
@@ -225,21 +211,9 @@ def lengcplot(dictionary):
                              horizontalalignment='center', 
                              verticalalignment='center', 
                              transform = ax.transAxes)
-        def on_key(event):
-            global annotation
-            global mark
-            if event.key == 'control':
-                try:
-                    annotation.remove()
-                    ax.lines.remove(mark)
-                    fig.canvas.draw()
-                except: 
-                    pass
-            else:
-                pass
-
-        cid = fig.canvas.mpl_connect('key_press_event', on_key)
         fig.canvas.draw()
+        annotation.remove()
+        ax.lines.remove(mark)
 
     def format_coord(x, y):
         """ format_coord shows contig.name (if any) in the lower right corner
@@ -295,14 +269,6 @@ def covgcplot(dictionary):
             else:
                 pass
     def onpick(event):
-        global annotation
-        global mark
-        if mark != None: 
-            try:
-                ax.lines.remove(mark)
-                annotation.remove()
-            except:
-                pass
         ind = event.ind
         contigname = namelist[int(ind[0])]
         contig.name = contigname
@@ -316,21 +282,9 @@ def covgcplot(dictionary):
                              horizontalalignment='center', 
                              verticalalignment='center', 
                              transform = ax.transAxes)
-        def on_key(event):
-            global annotation
-            global mark
-            if event.key == 'control':
-                try:
-                    annotation.remove()
-                    ax.lines.remove(mark)
-                    fig.canvas.draw()
-                except: 
-                    pass
-            else:
-                pass
-
-        cid = fig.canvas.mpl_connect('key_press_event', on_key)
         fig.canvas.draw()
+        annotation.remove()
+        ax.lines.remove(mark)
 
     def format_coord(x, y):
         if contig.name:
@@ -393,14 +347,6 @@ def covlenplot(dictionary):
                 pass
 
     def onpick(event):
-        global annotation
-        global mark
-        if mark != None: 
-            try:
-                ax.lines.remove(mark)
-                annotation.remove()
-            except:
-                pass
         ind = event.ind
         contigname = namelist[int(ind[0])]
         contig.name = contigname
@@ -415,21 +361,9 @@ def covlenplot(dictionary):
                              horizontalalignment='center', 
                              verticalalignment='center', 
                              transform = ax.transAxes)
-        def on_key(event):
-            global annotation
-            global mark
-            if event.key == 'control':
-                try:
-                    annotation.remove()
-                    ax.lines.remove(mark)
-                    fig.canvas.draw()
-                except: 
-                    pass
-            else:
-                pass
-
-        cid = fig.canvas.mpl_connect('key_press_event', on_key)
         fig.canvas.draw()
+        annotation.remove()
+        ax.lines.remove(mark)
 
     def format_coord(x, y):
         if contig.name:
