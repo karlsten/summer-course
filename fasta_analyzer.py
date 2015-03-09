@@ -99,7 +99,7 @@ class Fasta(object):
         return self.seq
 
     def length(self):
-        return len(self.seq)
+        return len(self.seq) - self.seq.count('\n')
 
     # Calculates the number of G and C relative to the 
     # total number of G, C, A and T.
